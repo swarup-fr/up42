@@ -1,2 +1,2 @@
-# core-API
-FR-Core-API
+# FR-API
+FR-API
