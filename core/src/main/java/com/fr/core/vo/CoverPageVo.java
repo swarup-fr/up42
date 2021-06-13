@@ -1,33 +1,30 @@
 package com.fr.core.vo;
 
-public class DemoGraphicVo {
-	private String field;
-	private String fieldDescription;
-	private String fieldValue;
-	private String fieldValueDescription;
+import java.util.List;
+
+public class CoverPageVo implements Data{
+
+	private String accountNo;
+	private String accountsToDate;
+	private List<DemoGraphicVo> demoGraphics;
 	
-	public String getField() {
-		return field;
+	public String getAccountNo() {
+		return accountNo;
 	}
-	public void setField(String field) {
-		this.field = field;
+	public void setAccountNo(String accountNo) {
+		this.accountNo = accountNo;
 	}
-	public String getFieldDescription() {
-		return fieldDescription;
+	public String getAccountsToDate() {
+		return accountsToDate;
 	}
-	public void setFieldDescription(String fieldDescription) {
-		this.fieldDescription = fieldDescription;
+	public void setAccountsToDate(String accountsToDate) {
+		this.accountsToDate = accountsToDate;
 	}
-	public String getFieldValue() {
-		return fieldValue;
+	public List<DemoGraphicVo> getDemoGraphics() {
+		return demoGraphics;
 	}
-	public void setFieldValue(String fieldValue) {
-		this.fieldValue = fieldValue;
+	public void setDemoGraphics(List<DemoGraphicVo> demoGraphics) {
+		this.demoGraphics = demoGraphics;
 	}
-	public String getFieldValueDescription() {
-		return fieldValueDescription;
-	}
-	public void setFieldValueDescription(String fieldValueDescription) {
-		this.fieldValueDescription = fieldValueDescription;
-	}
+	
 }
