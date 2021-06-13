@@ -1,30 +1,33 @@
 package com.fr.core.vo;
 
-import java.util.List;
-
-public class CoverPageVo implements Data{
-
-	private String accountNo;
-	private String accountsToDate;
-	private List<DemoGraphicVo> demoGraphics;
+public class DemoGraphicVo {
+	private String field;
+	private String fieldDescription;
+	private String fieldValue;
+	private String fieldValueDescription;
 	
-	public String getAccountNo() {
-		return accountNo;
+	public String getField() {
+		return field;
 	}
-	public void setAccountNo(String accountNo) {
-		this.accountNo = accountNo;
+	public void setField(String field) {
+		this.field = field;
 	}
-	public String getAccountsToDate() {
-		return accountsToDate;
+	public String getFieldDescription() {
+		return fieldDescription;
 	}
-	public void setAccountsToDate(String accountsToDate) {
-		this.accountsToDate = accountsToDate;
+	public void setFieldDescription(String fieldDescription) {
+		this.fieldDescription = fieldDescription;
 	}
-	public List<DemoGraphicVo> getDemoGraphics() {
-		return demoGraphics;
+	public String getFieldValue() {
+		return fieldValue;
 	}
-	public void setDemoGraphics(List<DemoGraphicVo> demoGraphics) {
-		this.demoGraphics = demoGraphics;
+	public void setFieldValue(String fieldValue) {
+		this.fieldValue = fieldValue;
 	}
-	
+	public String getFieldValueDescription() {
+		return fieldValueDescription;
+	}
+	public void setFieldValueDescription(String fieldValueDescription) {
+		this.fieldValueDescription = fieldValueDescription;
+	}
 }
