@@ -96,12 +96,12 @@ public class ASPPMergeStrategy implements MergeStrategy{
 		avo.setAccountNo(retCalcList.get(0).get("accounts.id"));
 		avo.setAccountsToDate(retCalcList.get(0).get("accounts.toDate"));
 		avo.setAccountsFromDate(retCalcList.get(0).get("periods.fromDate"));
-		avo.setAccountsFromDateAdjusted(retCalcList.get(0).get("accounts.SD_ADJ"));
+		avo.setAccountsFromDateAdjusted(retCalcList.get(0).get("accounts.fromDateAdjusted"));
 		
 		List<PeriodsVo> pl = new ArrayList<PeriodsVo>();
 		for(Map<String,String> rc : retCalcList) {
 			PeriodsVo pvo = new PeriodsVo();
-			pvo.setPeriod(rc.get("segments.STP"));
+			pvo.setPeriod(rc.get("periods.period"));
 			pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
 			pvo.setPeriodsIndex(rc.get("periods.index"));
 			if(!pl.contains(pvo))
@@ -112,17 +112,17 @@ public class ASPPMergeStrategy implements MergeStrategy{
 			List<ClassesVo> cl = new ArrayList<ClassesVo>();
 			for(Map<String,String> rc : retCalcList) {
 				PeriodsVo pvo = new PeriodsVo();
-				pvo.setPeriod(rc.get("segments.STP"));
+				pvo.setPeriod(rc.get("periods.period"));
 				pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
 				pvo.setPeriodsIndex(rc.get("periods.index"));
-				if(pv.equals(pvo) && rc.get("segments.id").equalsIgnoreCase(rc.get("accounts.sclassid"))) {
+				if(pv.equals(pvo) && rc.get("segments.id").equalsIgnoreCase(rc.get("classes.id"))) {
 					ClassesVo cvo = new ClassesVo();
-					cvo.setId(rc.get("accounts.sclassid"));
+					cvo.setId(rc.get("classes.id"));
 					cvo.setName(rc.get("segments.name"));
-					cvo.setMarketPrice(new BigDecimal(rc.get("periods.marketPrice")));
+//					cvo.setMarketPrice(new BigDecimal(rc.get("periods.marketPrice")));
 					cvo.setAccrual(new BigDecimal(rc.get("periods.accrual")));
-					cvo.setMarketValue(new BigDecimal(rc.get("periods.marketValue")));
-					cvo.setMarketValueAllocationPct(new BigDecimal(rc.get("periods.marketValuePct")));
+					cvo.setMarketValue(new BigDecimal(rc.get("periods.market")));
+					cvo.setMarketValueAllocationPct(new BigDecimal(rc.get("periods.allocationPct")));
 					cvo.setReturnPct(new BigDecimal(rc.get("periods.returnPct")));
 					cl.add(cvo);
 				}
@@ -139,19 +139,19 @@ public class ASPPMergeStrategy implements MergeStrategy{
 
 				for(Map<String,String> rc : retCalcList) {
 					PeriodsVo pvo = new PeriodsVo();
-					pvo.setPeriod(rc.get("segments.STP"));
+					pvo.setPeriod(rc.get("periods.period"));
 					pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
 					pvo.setPeriodsIndex(rc.get("periods.index"));
 					if(pv.equals(pvo) 
-							&& rc.get("accounts.sclassid").equalsIgnoreCase(cv1.getId()) 
-							&& !rc.get("segments.id").equalsIgnoreCase(rc.get("accounts.sclassid"))) {
+							&& rc.get("classes.id").equalsIgnoreCase(cv1.getId()) 
+							&& !rc.get("segments.id").equalsIgnoreCase(rc.get("classes.id"))) {
 						SegmentVo svo = new SegmentVo();
 						svo.setId(rc.get("segments.id"));
 						svo.setName(rc.get("segments.name"));
-						svo.setMarketPrice(new BigDecimal(rc.get("periods.marketPrice")));
+//						svo.setMarketPrice(new BigDecimal(rc.get("periods.marketPrice")));
 						svo.setAccrual(new BigDecimal(rc.get("periods.accrual")));
-						svo.setMarketValue(new BigDecimal(rc.get("periods.marketValue")));
-						svo.setMarketValueAllocationPct(new BigDecimal(rc.get("periods.marketValuePct")));
+						svo.setMarketValue(new BigDecimal(rc.get("periods.market")));
+						svo.setMarketValueAllocationPct(new BigDecimal(rc.get("periods.returnPct")));
 						svo.setReturnPct(new BigDecimal(rc.get("periods.returnPct")));
 						sl.add(svo);
 					}
@@ -159,7 +159,7 @@ public class ASPPMergeStrategy implements MergeStrategy{
 				cv1.setSegments(sl);
 			}
 		}
-		Map<String,List<Map<String,String>>> hidGrp = getGroupList(hidSumList, "segments.id","classes.id","periods.period","periods.months");
+		Map<String,List<Map<String,String>>> hidGrp = getGroupList(hidSumList, "segments.id","classes.id","periods.stp","periods.months");
 		
 		for(PeriodsVo pv :pl ) {
 			List<ClassesVo> cl = pv.getClasses();
@@ -170,7 +170,7 @@ public class ASPPMergeStrategy implements MergeStrategy{
 					List<Map<String,String>> assetList = hidGrp.get(sv.getId()+"~~"+cv.getId()+"~~"+pv.getPeriod()+"~~"+pv.getPeriodMonths());
 					for(Map<String,String> am : assetList) {
 						AssetsVo asvo = new AssetsVo();
-						asvo.setId(am.get("assets.id"));
+						asvo.setId(am.get("assets.hid_print"));
 						asvo.setName(am.get("assets.name"));
 						asvo.setMarketPrice(new BigDecimal(0));
 						asvo.setAccrual(new BigDecimal(am.get("assets.accrual")));
@@ -262,7 +262,7 @@ public class ASPPMergeStrategy implements MergeStrategy{
 				String[] response = responseToParse.split("~~");
 				Map<String,String> jsonMap = new HashMap<String,String>();
 				for(String res : response) {
-					String val=recordobj.get(res).getAsString();
+					String val=null!=recordobj.get(res)?recordobj.get(res).getAsString():"";
 					jsonMap.put(res, val);
 				}
 				jsonList.add(jsonMap);
