@@ -2,6 +2,7 @@ package com.fr.core.service;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fr.core.vo.CoverPageVo;
+import com.fr.core.vo.DemoGraphicVo;
 import com.fr.core.vo.ReportFilter;
 import com.fr.core.vo.ResponseVo;
 import com.fr.util.APIGateway;
@@ -42,8 +44,8 @@ public class CoverPageStrategy implements MergeStrategy {
 		try {
 			String url = formatUrl(webfocusCoverPageUrl,filterParameter);
 			List<Map<String,String>> fieldList =  convertToJsonMap(ag.restTemplateGet(url),coverPageResponse);
-			
-			CoverPageVo avo = null;//getCoverPageRequiredFields(fieldList, retCalcList);
+			String fieldsVal=filterParameter.getDemographics();
+			CoverPageVo avo = getCoverPageRequiredFields(fieldList, fieldsVal);
 			ResponseVo rv = new ResponseVo();
 			rv.setErrors(null);
 			rv.setStatus(200);
@@ -54,6 +56,33 @@ public class CoverPageStrategy implements MergeStrategy {
 		}
 		
 		return null;
+	}
+
+	private CoverPageVo getCoverPageRequiredFields(List<Map<String, String>> fieldList, String fieldsVal) {
+		// TODO Auto-generated method stub
+		CoverPageVo coverObj=new CoverPageVo();
+		List<DemoGraphicVo> demographicArray=new ArrayList<DemoGraphicVo>();
+		DemoGraphicVo demograhicRow=new DemoGraphicVo();
+		if(fieldsVal !="" && fieldsVal!=null) {
+			Map<String, String> firstMap=fieldList.get(0);
+			coverObj.setAccountNo(firstMap.get("accounts.id"));
+			coverObj.setAccountsToDate(firstMap.get("accounts.toDate"));
+			String[] fields=fieldsVal.split(",");
+			List<String> lstFields = Arrays.asList(fields);  
+			for (Map<String, String> map : fieldList) {
+				demograhicRow=new DemoGraphicVo();
+				String field=map.get("demographics.field");
+				if(lstFields.contains(field)) {
+					demograhicRow.setField(map.get("demographics.field"));
+					demograhicRow.setFieldDescription(map.get("demographics.fieldDescription"));
+					demograhicRow.setFieldValue(map.get("demographics.value"));
+					demograhicRow.setFieldValueDescription(map.get("demographics.valueDesc"));
+					demographicArray.add(demograhicRow);
+				}
+			}
+			coverObj.setDemoGraphics(demographicArray);
+		}
+		return coverObj;
 	}
 
 	private String formatUrl(String url,ReportFilter filterParameter) {
