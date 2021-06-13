@@ -13,7 +13,7 @@ public class ReportFilter {
 	private String classes;
 	private String excludeUninvestedCash="N";
 	private String excludeInterperiodAssets="N";
-	private String demograhics;
+	private String demographics;
 	
 	public String isExcludeInterperiodAssets() {
 		return excludeInterperiodAssets;
@@ -64,11 +64,11 @@ public class ReportFilter {
 	public void setExcludeUninvestedCash(String excludeUninvestedCash) {
 		this.excludeUninvestedCash = excludeUninvestedCash;
 	}
-	public String getDemograhics() {
-		return demograhics;
+	public String getDemographics() {
+		return demographics;
 	}
-	public void setDemograhics(String demograhics) {
-		this.demograhics = demograhics;
+	public void setDemographics(String demographics) {
+		this.demographics = demographics;
 	}
 	
 }
