@@ -1,13 +1,12 @@
 package com.fr.core.vo;
 
+import java.util.List;
+
 public class CoverPageVo implements Data{
 
 	private String accountNo;
 	private String accountsToDate;
-	private String field;
-	private String fieldDescription;
-	private String fieldValue;
-	private String fieldValueDescription;
+	private List<DemoGraphicVo> demoGraphics;
 	
 	public String getAccountNo() {
 		return accountNo;
@@ -21,29 +20,11 @@ public class CoverPageVo implements Data{
 	public void setAccountsToDate(String accountsToDate) {
 		this.accountsToDate = accountsToDate;
 	}
-	public String getField() {
-		return field;
+	public List<DemoGraphicVo> getDemoGraphics() {
+		return demoGraphics;
 	}
-	public void setField(String field) {
-		this.field = field;
-	}
-	public String getFieldDescription() {
-		return fieldDescription;
-	}
-	public void setFieldDescription(String fieldDescription) {
-		this.fieldDescription = fieldDescription;
-	}
-	public String getFieldValue() {
-		return fieldValue;
-	}
-	public void setFieldValue(String fieldValue) {
-		this.fieldValue = fieldValue;
-	}
-	public String getFieldValueDescription() {
-		return fieldValueDescription;
-	}
-	public void setFieldValueDescription(String fieldValueDescription) {
-		this.fieldValueDescription = fieldValueDescription;
+	public void setDemoGraphics(List<DemoGraphicVo> demoGraphics) {
+		this.demoGraphics = demoGraphics;
 	}
 	
 }
