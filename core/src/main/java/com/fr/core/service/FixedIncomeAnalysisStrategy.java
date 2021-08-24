@@ -12,7 +12,7 @@ public class FixedIncomeAnalysisStrategy implements MergeStrategy {
 	public static final Logger logger = Logger.getLogger(FixedIncomeAnalysisStrategy.class);
 
 	@Override
-	public ResponseVo getReportData(ReportFilter filterParameter) throws Exception {
+	public ResponseVo getReportData(String filterParameter) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -10,19 +10,19 @@ public class AccountsVo implements Data{
 	private String accountsFromDateAdjusted;
 	private List<PeriodsVo> periods;
 	
-//	@Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        AccountsVo cls = (AccountsVo) o;
-//        return accountNo.equalsIgnoreCase(cls.accountNo) && accountsToDate.equalsIgnoreCase(cls.accountsToDate)
-//        		&& accountsFromDate.equalsIgnoreCase(cls.accountsFromDate) && accountsFromDateAdjusted.equalsIgnoreCase(cls.accountsFromDateAdjusted);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return accountNo.hashCode()+accountsToDate.hashCode()+accountsFromDate.hashCode()+accountsFromDateAdjusted.hashCode();
-//    }
+	@Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AccountsVo cls = (AccountsVo) o;
+        return accountNo.equalsIgnoreCase(cls.accountNo) && accountsToDate.equalsIgnoreCase(cls.accountsToDate)
+        		&& accountsFromDate.equalsIgnoreCase(cls.accountsFromDate) && accountsFromDateAdjusted.equalsIgnoreCase(cls.accountsFromDateAdjusted);
+    }
+
+    @Override
+    public int hashCode() {
+        return accountNo.hashCode()+accountsToDate.hashCode()+accountsFromDate.hashCode()+accountsFromDateAdjusted.hashCode();
+    }
 	
 	public List<PeriodsVo> getPeriods() {
 		return periods;

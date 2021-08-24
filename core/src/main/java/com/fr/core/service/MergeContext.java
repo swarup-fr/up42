@@ -14,7 +14,7 @@ public class MergeContext {
 		this.ms = ms;
 	}
 	
-	public ResponseVo executeMergeStrategy(ReportFilter filterParameter) throws Exception {
+	public ResponseVo executeMergeStrategy(String filterParameter) throws Exception {
 		return ms.getReportData(filterParameter);
 	}
 }

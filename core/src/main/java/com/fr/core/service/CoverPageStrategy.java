@@ -1,9 +1,10 @@
 package com.fr.core.service;
 
-import java.lang.reflect.Method;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,10 +12,10 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
 import com.fr.core.vo.CoverPageVo;
 import com.fr.core.vo.DemoGraphicVo;
-import com.fr.core.vo.ReportFilter;
 import com.fr.core.vo.ResponseVo;
 import com.fr.util.APIGateway;
 import com.google.gson.Gson;
@@ -29,34 +30,61 @@ public class CoverPageStrategy implements MergeStrategy {
 	
 	@Value("${webfocus.coverpage.url}")
 	private String webfocusCoverPageUrl;
-	
-	@Value("${inputParam.mapping}")
-	private String inputParamMapping;
+//	
+//	@Value("${inputParam.mapping}")
+//	private String inputParamMapping;
 	
 	@Value("${COVERPAGE.response}")
 	private String coverPageResponse;
 	
 	@Autowired
 	private APIGateway ag;
-	
+
 	@Override
-	public ResponseVo getReportData(ReportFilter filterParameter) throws Exception {
+	public ResponseVo getReportData(String filterParameter) throws Exception {
+		// TODO Auto-generated method stub
+		Map<String,String> paramsMap =extractInputParams(filterParameter);
+		String url = formatUrl(webfocusCoverPageUrl,paramsMap);
+		String responeToParse = null;
 		try {
-			String url = formatUrl(webfocusCoverPageUrl,filterParameter);
-			List<Map<String,String>> fieldList =  convertToJsonMap(ag.restTemplateGet(url),coverPageResponse);
-			String fieldsVal=filterParameter.getDemographics();
-			CoverPageVo avo = getCoverPageRequiredFields(fieldList, fieldsVal);
-			ResponseVo rv = new ResponseVo();
-			rv.setErrors(null);
-			rv.setStatus(200);
-			rv.setRecords(avo);
-			return rv;
-		}catch(Exception e) {
-			e.printStackTrace();
+			responeToParse = ag.restTemplateGet(url);
+			if(responeToParse.contains("ERROR")) {
+				return buildErrorResponseVo(responeToParse);
+			}
+		}catch(RestClientException e) {
+			return buildErrorResponseVo("E1010 : SECTOR ALLOC RestClientException.");
+		}catch(URISyntaxException e) {
+			return buildErrorResponseVo("E1011 : SECTOR ALLOC URISyntaxException.");
 		}
 		
-		return null;
+		List<Map<String,String>> fieldList =  convertToJsonMap(responeToParse,coverPageResponse);
+		String fieldsVal=paramsMap.get("demographics");//filterParameter.getDemographics();
+		CoverPageVo avo = getCoverPageRequiredFields(fieldList, fieldsVal);
+		ResponseVo rv = new ResponseVo();
+		rv.setErrors(null);
+		rv.setStatus(200);
+		rv.setRecords(avo);
+		return rv;
 	}
+	
+//	@Override
+//	public ResponseVo getReportData(ReportFilter filterParameter) throws Exception {
+//		try {
+//			String url = formatUrl(webfocusCoverPageUrl,filterParameter);
+//			List<Map<String,String>> fieldList =  convertToJsonMap(ag.restTemplateGet(url),coverPageResponse);
+//			String fieldsVal=filterParameter.getDemographics();
+//			CoverPageVo avo = getCoverPageRequiredFields(fieldList, fieldsVal);
+//			ResponseVo rv = new ResponseVo();
+//			rv.setErrors(null);
+//			rv.setStatus(200);
+//			rv.setRecords(avo);
+//			return rv;
+//		}catch(Exception e) {
+//			e.printStackTrace();
+//		}
+//		
+//		return null;
+//	}
 
 	private CoverPageVo getCoverPageRequiredFields(List<Map<String, String>> fieldList, String fieldsVal) {
 		// TODO Auto-generated method stub
@@ -85,22 +113,22 @@ public class CoverPageStrategy implements MergeStrategy {
 		return coverObj;
 	}
 
-	private String formatUrl(String url,ReportFilter filterParameter) {
-		String[] params = inputParamMapping.split("~~");
-		for(String p :params) {
-			String[] pv = p.split(":");
-			Class<?> classObj = filterParameter.getClass();
-			  
-			try {
-				Method pvm = classObj.getDeclaredMethod(pv[1]);
-	            url = url.replace(pv[0],String.valueOf(pvm.invoke(filterParameter)));
-	        }catch(Exception e) {
-	        	e.printStackTrace();
-	        }
-		}
-//		System.out.println(url);
-		return url;
-	}
+//	private String formatUrl(String url,ReportFilter filterParameter) {
+//		String[] params = inputParamMapping.split("~~");
+//		for(String p :params) {
+//			String[] pv = p.split(":");
+//			Class<?> classObj = filterParameter.getClass();
+//			  
+//			try {
+//				Method pvm = classObj.getDeclaredMethod(pv[1]);
+//	            url = url.replace(pv[0],String.valueOf(pvm.invoke(filterParameter)));
+//	        }catch(Exception e) {
+//	        	e.printStackTrace();
+//	        }
+//		}
+////		System.out.println(url);
+//		return url;
+//	}
 	
 	private List<Map<String,String>> convertToJsonMap(String respJsonString,String responseToParse) {
 		Gson gson = new Gson();
@@ -128,5 +156,35 @@ public class CoverPageStrategy implements MergeStrategy {
 			}
 		}
 		return jsonList;
+	}
+
+	private Map<String,String> extractInputParams(String filterParameter){
+		Gson gson = new Gson();
+		JsonObject jsonObject = gson.fromJson(filterParameter, JsonObject.class);
+
+		Map<String,String> pamasMap = new LinkedHashMap<String, String>();
+		for(String p :jsonObject.keySet()) {
+			pamasMap.put(p,jsonObject.get(p).getAsString());
+		}
+		return pamasMap;
+	}
+	
+	
+	private String formatUrl(String url,Map<String,String> paramsMap) {
+		StringBuilder urlParams = new StringBuilder();
+		for(String p :paramsMap.keySet()) {
+			urlParams.append("&").append(p).append("=").append(paramsMap.get(p));
+		}
+		url = url+urlParams.toString();
+		System.out.println(url);
+		return url;
+	}
+	
+	private ResponseVo buildErrorResponseVo(String responeToParse) {
+		ResponseVo rv = new ResponseVo();
+		rv.setErrors(responeToParse);
+		rv.setStatus(500);
+		rv.setRecords(null);
+		return rv;
 	}
 }

@@ -10,6 +10,7 @@ public class SegmentVo {
 	private BigDecimal marketPrice;
 	private BigDecimal accrual;
 	private BigDecimal marketValue;
+	private BigDecimal marketPriceAllocationPct;
 	private BigDecimal marketValueAllocationPct;
 	private BigDecimal returnPct;
 	private List<AssetsVo> assets;
@@ -43,6 +44,12 @@ public class SegmentVo {
 	}
 	public void setMarketValue(BigDecimal marketValue) {
 		this.marketValue = marketValue;
+	}
+	public BigDecimal getMarketPriceAllocationPct() {
+		return marketPriceAllocationPct;
+	}
+	public void setMarketPriceAllocationPct(BigDecimal marketPriceAllocationPct) {
+		this.marketPriceAllocationPct = marketPriceAllocationPct;
 	}
 	public BigDecimal getMarketValueAllocationPct() {
 		return marketValueAllocationPct;
