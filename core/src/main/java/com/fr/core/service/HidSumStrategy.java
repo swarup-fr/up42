@@ -10,14 +10,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
+import com.fr.core.vo.AccountsVo;
 import com.fr.core.vo.ResponseVo;
 import com.fr.util.APIGateway;
 import com.fr.util.APIUtils;
 
 @Service
-public class PerformanceStrategy implements MergeStrategy{
+public class HidSumStrategy implements MergeStrategy{
 	
-	public static final Logger logger = Logger.getLogger(PerformanceStrategy.class);
+	public static final Logger logger = Logger.getLogger(HidSumStrategy.class);
 
 	@Value("${webfocus.url}")
 	private String webfocusUrl;
@@ -33,7 +34,7 @@ public class PerformanceStrategy implements MergeStrategy{
 	public ResponseVo getReportData(String filterParameter)  {
 			Map<String,String> paramsMap =APIUtils.extractInputParams(filterParameter);
 			
-			String url = APIUtils.formatUrl(webfocusUrl,paramsMap,String.valueOf(101));
+			String url = APIUtils.formatUrl(webfocusUrl,paramsMap,String.valueOf(102));
 
 			String responeToParse = null;
 			try {
@@ -42,12 +43,12 @@ public class PerformanceStrategy implements MergeStrategy{
 					return buildErrorResponseVo(responeToParse);
 				}
 			}catch(RestClientException e) {
-				return buildErrorResponseVo("E1012 : Performance RestClientException.");
+				return buildErrorResponseVo("E1014 : HIDSUM RestClientException.");
 			}catch(URISyntaxException e) {
-				return buildErrorResponseVo("E1013 : Performance URISyntaxException.");
+				return buildErrorResponseVo("E1015 : HIDSUM ALLOC URISyntaxException.");
 			}
 			
-			List<Map<String,String>> dataList =  APIUtils.convertToJsonMap(responeToParse,cds.getFieldsList(101L, 529L));
+			List<Map<String,String>> dataList =  APIUtils.convertToJsonMap(responeToParse,cds.getFieldsList(102L, 376L));
 			
 			ResponseVo rv = new ResponseVo();
 			rv.setErrors(null);
@@ -64,25 +65,26 @@ public class PerformanceStrategy implements MergeStrategy{
 		return rv;
 	}
 	
-//	private AccountsVo merge(List<Map<String,String>> retCalcList) {
-//		
-//		AccountsVo avo = new AccountsVo();
-//		avo.setAccountNo(retCalcList.get(0).get("accounts.id"));
-//		avo.setAccountsToDate(retCalcList.get(0).get("accounts.toDate"));
-//		avo.setAccountsFromDate(retCalcList.get(0).get("periods.fromDate"));
-//		avo.setAccountsFromDateAdjusted(retCalcList.get(0).get("accounts.SD_ADJ"));
-//				
-////		ObjectMapper om=new ObjectMapper();	
-////		String json=null;
-////		try {
-////			json = om.writeValueAsString(avo);
-////		} catch (JsonProcessingException e) {
-////			// TODO Auto-generated catch block
-////			e.printStackTrace();
-////		}
-////		System.out.println("ASPP json: " + json);
-////		logger.info(json);
-//		return avo;
-//	}
+	private AccountsVo merge(List<Map<String,String>> retCalcList) {
+		
+		AccountsVo avo = new AccountsVo();
+		avo.setAccountNo(retCalcList.get(0).get("accounts.id"));
+		avo.setAccountsToDate(retCalcList.get(0).get("accounts.toDate"));
+		avo.setAccountsFromDate(retCalcList.get(0).get("periods.fromDate"));
+		avo.setAccountsFromDateAdjusted(retCalcList.get(0).get("accounts.SD_ADJ"));
+				
+//		ObjectMapper om=new ObjectMapper();	
+//		String json=null;
+//		try {
+//			json = om.writeValueAsString(avo);
+//		} catch (JsonProcessingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		System.out.println("ASPP json: " + json);
+//		logger.info(json);
+		return avo;
+	}
 	
+
 }

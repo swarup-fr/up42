@@ -15,9 +15,9 @@ import com.fr.util.APIGateway;
 import com.fr.util.APIUtils;
 
 @Service
-public class PerformanceStrategy implements MergeStrategy{
+public class FinsStrategy implements MergeStrategy{
 	
-	public static final Logger logger = Logger.getLogger(PerformanceStrategy.class);
+	public static final Logger logger = Logger.getLogger(FinsStrategy.class);
 
 	@Value("${webfocus.url}")
 	private String webfocusUrl;
@@ -33,7 +33,7 @@ public class PerformanceStrategy implements MergeStrategy{
 	public ResponseVo getReportData(String filterParameter)  {
 			Map<String,String> paramsMap =APIUtils.extractInputParams(filterParameter);
 			
-			String url = APIUtils.formatUrl(webfocusUrl,paramsMap,String.valueOf(101));
+			String url = APIUtils.formatUrl(webfocusUrl,paramsMap,String.valueOf(103));
 
 			String responeToParse = null;
 			try {
@@ -42,12 +42,12 @@ public class PerformanceStrategy implements MergeStrategy{
 					return buildErrorResponseVo(responeToParse);
 				}
 			}catch(RestClientException e) {
-				return buildErrorResponseVo("E1012 : Performance RestClientException.");
+				return buildErrorResponseVo("E1016 : Fins RestClientException.");
 			}catch(URISyntaxException e) {
-				return buildErrorResponseVo("E1013 : Performance URISyntaxException.");
+				return buildErrorResponseVo("E1017 : Fins URISyntaxException.");
 			}
 			
-			List<Map<String,String>> dataList =  APIUtils.convertToJsonMap(responeToParse,cds.getFieldsList(101L, 529L));
+			List<Map<String,String>> dataList =  APIUtils.convertToJsonMap(responeToParse,cds.getFieldsList(103L, 502L));
 			
 			ResponseVo rv = new ResponseVo();
 			rv.setErrors(null);
@@ -85,4 +85,5 @@ public class PerformanceStrategy implements MergeStrategy{
 //		return avo;
 //	}
 	
+
 }
