@@ -11,9 +11,8 @@ public class ReportFilter {
 	private String sectors;
 	private String sectorSchema;
 	private String classes;
-	private String excludeUninvestedCash="N";
-	private String excludeInterperiodAssets="N";
-	private String demographics;
+	private String excludeUninvestedCash;
+	private String excludeInterperiodAssets;
 	
 	public String isExcludeInterperiodAssets() {
 		return excludeInterperiodAssets;
@@ -63,12 +62,6 @@ public class ReportFilter {
 	}
 	public void setExcludeUninvestedCash(String excludeUninvestedCash) {
 		this.excludeUninvestedCash = excludeUninvestedCash;
-	}
-	public String getDemographics() {
-		return demographics;
-	}
-	public void setDemographics(String demographics) {
-		this.demographics = demographics;
 	}
 	
 }

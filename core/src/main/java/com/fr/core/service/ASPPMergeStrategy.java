@@ -1,7 +1,7 @@
 package com.fr.core.service;
 
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,16 +10,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.collections.ListUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
 import com.fr.core.vo.AccountsVo;
 import com.fr.core.vo.AssetsVo;
 import com.fr.core.vo.ClassesVo;
 import com.fr.core.vo.PeriodsVo;
-import com.fr.core.vo.ReportFilter;
 import com.fr.core.vo.ResponseVo;
 import com.fr.core.vo.SegmentVo;
 import com.fr.util.APIGateway;
@@ -33,11 +34,17 @@ public class ASPPMergeStrategy implements MergeStrategy{
 	
 	public static final Logger logger = Logger.getLogger(ASPPMergeStrategy.class);
 
-	@Value("${webfocus.aspp.hidsum.url}")
-	private String webfocusAsppHidsumUrl;
+	@Value("${webfocus.aspp.twrr.hidsum.url}")
+	private String webfocusAsppTwrrHidsumUrl;
 	
-	@Value("${webfocus.aspp.retcalc.url}")
-	private String webfocusAsppRetcalcUrl;
+	@Value("${webfocus.aspp.twrr.retcalc.url}")
+	private String webfocusAsppTwrrRetcalcUrl;
+	
+	@Value("${webfocus.aspp.mwrr.hidsum.url}")
+	private String webfocusAsppMwrrHidsumUrl;
+	
+	@Value("${webfocus.aspp.mwrr.retcalc.url}")
+	private String webfocusAsppMwrrRetcalcUrl;
 	
 	@Value("${HIDSUM.response}")
 	private String hidSumResponse;
@@ -45,9 +52,6 @@ public class ASPPMergeStrategy implements MergeStrategy{
 	@Value("${RETCALC.response}")
 	private String retCalcResponse;
 	
-	@Value("${inputParam.mapping}")
-	private String inputParamMapping;
-
 	@Value("${finaljson.accounts}")
 	private String fjAccounts;
 	
@@ -64,30 +68,110 @@ public class ASPPMergeStrategy implements MergeStrategy{
 	private APIGateway ag;
 	
 	@Override
-	public ResponseVo getReportData(ReportFilter filterParameter) throws Exception {
-		try {
-			String url = formatUrl(webfocusAsppHidsumUrl,filterParameter);
-			List<Map<String,String>> hidSumList =  convertToJsonMap(ag.restTemplateGet(url),hidSumResponse);
+	public ResponseVo getReportData(String filterParameter)  {
+			Map<String,String> paramsMap =extractInputParams(filterParameter);
+			
+			String url = formatUrl(webfocusAsppTwrrHidsumUrl,paramsMap);
+			if(paramsMap.get("segmentExclude")!=null) {
+				url = url.concat("&segmentExclude="+paramsMap.get("segmentExclude"));
+			}
+			String hidSumResponeToParse = null;
+			try {
+				hidSumResponeToParse = ag.restTemplateGet(url);
+				if(hidSumResponeToParse.contains("ERROR")) {
+					return buildErrorResponseVo(hidSumResponeToParse);
+				}
+			}catch(RestClientException e) {
+				return buildErrorResponseVo("E1001 : ASPP HIDSUM RestClientException.");
+			}catch(URISyntaxException e) {
+				return buildErrorResponseVo("E1002 : ASPP HIDSUM URISyntaxException.");
+			}
+			
+			
+			List<Map<String,String>> hidSumList =  convertToJsonMap(hidSumResponeToParse,hidSumResponse,false);
 			Set<String> sector = new HashSet<String>();
 			for(Map<String,String> m : hidSumList ) {
-//				if(!"02".equalsIgnoreCase(m.get("segments.id")))
 				sector.add(m.get("segments.id"));
 			}
-			String urlRet = formatUrl(webfocusAsppRetcalcUrl,filterParameter);
-			urlRet = urlRet.replace("<SEGMENTS>", String.join(",", sector)+","+filterParameter.getClasses());
-			List<Map<String,String>> retCalcList =  convertToJsonMap(ag.restTemplateGet(urlRet),retCalcResponse);
+			String urlRet = formatUrl(webfocusAsppTwrrRetcalcUrl,paramsMap);
 			
-			AccountsVo avo = merge(hidSumList, retCalcList);
+			urlRet = urlRet.replace("<SEGMENTS>", String.join(",", sector)+","+paramsMap.get("classes"));
+			System.out.println(urlRet);
+			if(paramsMap.get("segmentExclude")!=null) {
+				urlRet = urlRet.concat("&segmentExclude="+paramsMap.get("segmentExclude"));
+			}
+			String retCalcResponeToParse = null;
+			try {
+				retCalcResponeToParse = ag.restTemplateGet(urlRet);
+			}catch(RestClientException e) {
+				return buildErrorResponseVo("E1003 : ASPP RETCALC RestClientException.");
+			}catch(URISyntaxException e) {
+				return buildErrorResponseVo("E1004 : ASPP RETCALC URISyntaxException.");
+			}
+			List<Map<String,String>> retCalcList =  convertToJsonMap(retCalcResponeToParse,retCalcResponse,false);
+			
+			AccountsVo avo = null;
+			
+			////////////////////////////////////////////////////////////////////////////////////////////////
+			if(paramsMap.get("segmentExclude")!=null) {
+				String segmentToInclude = paramsMap.get("segmentExclude");
+				paramsMap.remove("segmentExclude");
+				paramsMap.remove("segmentUse");
+				
+				String mhurl = formatUrl(webfocusAsppMwrrHidsumUrl,paramsMap);
+				String mhidSumResponeToParse = null;
+				try {
+					mhidSumResponeToParse = ag.restTemplateGet(mhurl);
+					if(mhidSumResponeToParse.contains("ERROR")) {
+						return buildErrorResponseVo(mhidSumResponeToParse);
+					}
+				}catch(RestClientException e) {
+					return buildErrorResponseVo("E1005 : ASPP HIDSUM RestClientException.");
+				}catch(URISyntaxException e) {
+					return buildErrorResponseVo("E1006 : ASPP HIDSUM URISyntaxException.");
+				}
+				
+				
+				List<Map<String,String>> mhidSumList =  convertToJsonMap(hidSumResponeToParse,hidSumResponse,true);
+				hidSumList.addAll(mhidSumList);
+				
+				String murlRet = formatUrl(webfocusAsppMwrrRetcalcUrl,paramsMap);
+				
+				murlRet = murlRet.replace("<SEGMENTS>",segmentToInclude );
+				System.out.println(murlRet);
+				String mretCalcResponeToParse = null;
+				try {
+					mretCalcResponeToParse = ag.restTemplateGet(murlRet);
+				}catch(RestClientException e) {
+					return buildErrorResponseVo("E1007 : ASPP RETCALC RestClientException.");
+				}catch(URISyntaxException e) {
+					return buildErrorResponseVo("E1008 : ASPP RETCALC URISyntaxException.");
+				}
+				List<Map<String,String>> mretCalcList =  convertToJsonMap(mretCalcResponeToParse,retCalcResponse,true);
+				retCalcList.addAll(mretCalcList);
+				
+			}
+			
+			try {
+				avo = merge(hidSumList, retCalcList);
+			}catch(Exception e) {
+				e.printStackTrace();
+				return buildErrorResponseVo("E1009 : ASPP Error processing response.");
+			}
+			
 			ResponseVo rv = new ResponseVo();
 			rv.setErrors(null);
 			rv.setStatus(200);
 			rv.setRecords(avo);
 			return rv;
-		}catch(Exception e) {
-			e.printStackTrace();
-		}
-		
-		return null;
+	}
+
+	private ResponseVo buildErrorResponseVo(String responeToParse) {
+		ResponseVo rv = new ResponseVo();
+		rv.setErrors(responeToParse);
+		rv.setStatus(500);
+		rv.setRecords(null);
+		return rv;
 	}
 	
 	private AccountsVo merge(List<Map<String,String>> hidSumList,List<Map<String,String>> retCalcList) {
@@ -96,15 +180,18 @@ public class ASPPMergeStrategy implements MergeStrategy{
 		avo.setAccountNo(retCalcList.get(0).get("accounts.id"));
 		avo.setAccountsToDate(retCalcList.get(0).get("accounts.toDate"));
 		avo.setAccountsFromDate(retCalcList.get(0).get("periods.fromDate"));
-		avo.setAccountsFromDateAdjusted(retCalcList.get(0).get("accounts.fromDateAdjusted"));
+		avo.setAccountsFromDateAdjusted(retCalcList.get(0).get("accounts.SD_ADJ"));
 		
 		List<PeriodsVo> pl = new ArrayList<PeriodsVo>();
 		for(Map<String,String> rc : retCalcList) {
 			PeriodsVo pvo = new PeriodsVo();
 			pvo.setPeriod(rc.get("periods.period"));
-			pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
+			if(rc.get("periods.months").contains("."))
+				pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
+			else
+				pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months")));
 			pvo.setPeriodsIndex(rc.get("periods.index"));
-			if(!pl.contains(pvo))
+			if(!pl.contains(pvo)) 
 				pl.add(pvo);
 		}
 		
@@ -113,17 +200,21 @@ public class ASPPMergeStrategy implements MergeStrategy{
 			for(Map<String,String> rc : retCalcList) {
 				PeriodsVo pvo = new PeriodsVo();
 				pvo.setPeriod(rc.get("periods.period"));
-				pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
+				if(rc.get("periods.months").contains("."))
+					pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
+				else
+					pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months")));
 				pvo.setPeriodsIndex(rc.get("periods.index"));
 				if(pv.equals(pvo) && rc.get("segments.id").equalsIgnoreCase(rc.get("classes.id"))) {
 					ClassesVo cvo = new ClassesVo();
 					cvo.setId(rc.get("classes.id"));
-					cvo.setName(rc.get("segments.name"));
-//					cvo.setMarketPrice(new BigDecimal(rc.get("periods.marketPrice")));
-					cvo.setAccrual(new BigDecimal(rc.get("periods.accrual")));
-					cvo.setMarketValue(new BigDecimal(rc.get("periods.market")));
-					cvo.setMarketValueAllocationPct(new BigDecimal(rc.get("periods.allocationPct")));
-					cvo.setReturnPct(new BigDecimal(rc.get("periods.returnPct")));
+					cvo.setName(rc.get("classes.name"));
+					System.out.println(rc.get("segments.market"));
+					cvo.setMarketPrice(new BigDecimal(rc.get("segments.market")));
+					cvo.setAccrual(new BigDecimal(rc.get("segments.accrual")));
+					cvo.setMarketValue(new BigDecimal(rc.get("segments.market")));
+					cvo.setMarketValueAllocationPct(new BigDecimal(rc.get("segments.allocationPct")));
+					cvo.setReturnPct(new BigDecimal(rc.get("segments.returnPct")));
 					cl.add(cvo);
 				}
 			}
@@ -140,7 +231,10 @@ public class ASPPMergeStrategy implements MergeStrategy{
 				for(Map<String,String> rc : retCalcList) {
 					PeriodsVo pvo = new PeriodsVo();
 					pvo.setPeriod(rc.get("periods.period"));
-					pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
+					if(rc.get("periods.months").contains("."))
+						pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months").substring(0,rc.get("periods.months").indexOf("."))));
+					else
+						pvo.setPeriodMonths(Integer.parseInt(rc.get("periods.months")));
 					pvo.setPeriodsIndex(rc.get("periods.index"));
 					if(pv.equals(pvo) 
 							&& rc.get("classes.id").equalsIgnoreCase(cv1.getId()) 
@@ -148,10 +242,10 @@ public class ASPPMergeStrategy implements MergeStrategy{
 						SegmentVo svo = new SegmentVo();
 						svo.setId(rc.get("segments.id"));
 						svo.setName(rc.get("segments.name"));
-//						svo.setMarketPrice(new BigDecimal(rc.get("periods.marketPrice")));
+						svo.setMarketPrice(new BigDecimal(rc.get("periods.marketPrice")));
 						svo.setAccrual(new BigDecimal(rc.get("periods.accrual")));
-						svo.setMarketValue(new BigDecimal(rc.get("periods.market")));
-						svo.setMarketValueAllocationPct(new BigDecimal(rc.get("periods.returnPct")));
+						svo.setMarketValue(new BigDecimal(rc.get("periods.marketValue")));
+						svo.setMarketValueAllocationPct(new BigDecimal(rc.get("periods.marketValuePct")));
 						svo.setReturnPct(new BigDecimal(rc.get("periods.returnPct")));
 						sl.add(svo);
 					}
@@ -159,28 +253,30 @@ public class ASPPMergeStrategy implements MergeStrategy{
 				cv1.setSegments(sl);
 			}
 		}
-		Map<String,List<Map<String,String>>> hidGrp = getGroupList(hidSumList, "segments.id","classes.id","periods.stp","periods.months");
+		Map<String,List<Map<String,String>>> hidGrp = getGroupList(hidSumList, "segments.id","classes.id","periods.period","periods.months");
 		
 		for(PeriodsVo pv :pl ) {
 			List<ClassesVo> cl = pv.getClasses();
 			for(ClassesVo cv : cl) {
 				List<SegmentVo> sl = cv.getSegments();
 				for(SegmentVo sv : sl) {
-					List<AssetsVo> al = new ArrayList<AssetsVo>();
 					List<Map<String,String>> assetList = hidGrp.get(sv.getId()+"~~"+cv.getId()+"~~"+pv.getPeriod()+"~~"+pv.getPeriodMonths());
-					for(Map<String,String> am : assetList) {
-						AssetsVo asvo = new AssetsVo();
-						asvo.setId(am.get("assets.hid_print"));
-						asvo.setName(am.get("assets.name"));
-						asvo.setMarketPrice(new BigDecimal(0));
-						asvo.setAccrual(new BigDecimal(am.get("assets.accrual")));
-						asvo.setMarketValue(new BigDecimal(am.get("assets.marketValue")));
-						asvo.setMarketValueAllocationPct(new BigDecimal(am.get("assets.marketValueAllocationPct")));
-						asvo.setReturnPct(new BigDecimal(am.get("assets.returnPct")));
-						if(!al.contains(asvo))
-						al.add(asvo);
+					if(null!=assetList && !assetList.isEmpty()) {
+						List<AssetsVo> al = new ArrayList<AssetsVo>();
+						for(Map<String,String> am : assetList) {
+							AssetsVo asvo = new AssetsVo();
+							asvo.setId(am.get("assets.id"));
+							asvo.setName(am.get("assets.name"));
+							asvo.setMarketPrice(new BigDecimal(0));
+							asvo.setAccrual(new BigDecimal(am.get("assets.accrual")));
+							asvo.setMarketValue(new BigDecimal(am.get("assets.marketValue")));
+							asvo.setMarketValueAllocationPct(new BigDecimal(am.get("assets.marketValueAllocationPct")));
+							asvo.setReturnPct(new BigDecimal(am.get("assets.returnPct")));
+							if(!al.contains(asvo))
+							al.add(asvo);
+						}
+						sv.setAssets(al);
 					}
-					sv.setAssets(al);
 				}
 			}
 		}
@@ -198,21 +294,25 @@ public class ASPPMergeStrategy implements MergeStrategy{
 		return avo;
 	}
 	
-	private String formatUrl(String url,ReportFilter filterParameter) {
-		String[] params = inputParamMapping.split("~~");
-		for(String p :params) {
-			String[] pv = p.split(":");
-			Class<?> classObj = filterParameter.getClass();
-			  
-			try {
-				Method pvm = classObj.getDeclaredMethod(pv[1]);
-	            url = url.replace(pv[0],String.valueOf(pvm.invoke(filterParameter)));
-	        }catch(Exception e) {
-	        	e.printStackTrace();
-	        }
+	private String formatUrl(String url,Map<String,String> paramsMap) {
+		StringBuilder urlParams = new StringBuilder();
+		for(String p :paramsMap.keySet()) {
+			urlParams.append("&").append(p).append("=").append(paramsMap.get(p));
 		}
-//		System.out.println(url);
+		url = url+urlParams.toString();
+		System.out.println(url);
 		return url;
+	}
+	
+	private Map<String,String> extractInputParams(String filterParameter){
+		Gson gson = new Gson();
+		JsonObject jsonObject = gson.fromJson(filterParameter, JsonObject.class);
+
+		Map<String,String> pamasMap = new LinkedHashMap<String, String>();
+		for(String p :jsonObject.keySet()) {
+			pamasMap.put(p,jsonObject.get(p).getAsString());
+		}
+		return pamasMap;
 	}
 	
 	private Map<String, List<Map<String, String>>>  getGroupList(List<Map<String, String>> retCalcList,
@@ -233,25 +333,8 @@ public class ASPPMergeStrategy implements MergeStrategy{
 		return mapGrp;
 	}
 	
-	private Map<String, List<Map<String, String>>>  getGroupList(List<Map<String, String>> retCalcList,String grpBy) {
-		Map<String,List<Map<String,String>>> mapGrp = new LinkedHashMap<String, List<Map<String,String>>>();
-		for(Map<String,String> rm :retCalcList) {
-			if(mapGrp.containsKey(rm.get(grpBy))) {
-				List<Map<String,String>> rcl = mapGrp.get(rm.get(grpBy));
-				rcl.add(rm);
-				mapGrp.put(rm.get(grpBy), rcl);
-			}else {
-				List<Map<String,String>> rcl = new ArrayList<Map<String,String>>();
-				rcl.add(rm);
-				mapGrp.put(rm.get(grpBy), rcl);
-			}
-		}
-		return mapGrp;
-	}
-	
-	private List<Map<String,String>> convertToJsonMap(String respJsonString,String responseToParse) {
+	private List<Map<String,String>> convertToJsonMap(String respJsonString,String responseToParse,boolean ismwrr) {
 		Gson gson = new Gson();
-//		System.out.println(respJsonString);
 		JsonObject jsonObject = gson.fromJson(respJsonString, JsonObject.class);
 		JsonElement jsonelement =  jsonObject.get("records");
 		List<Map<String,String>> jsonList = new ArrayList<Map<String,String>>();
@@ -262,8 +345,11 @@ public class ASPPMergeStrategy implements MergeStrategy{
 				String[] response = responseToParse.split("~~");
 				Map<String,String> jsonMap = new HashMap<String,String>();
 				for(String res : response) {
-					String val=null!=recordobj.get(res)?recordobj.get(res).getAsString():"";
-					jsonMap.put(res, val);
+					String val=null!=recordobj && null!=recordobj.get(res) ? recordobj.get(res).getAsString():"";
+					if(ismwrr && res.contains("name"))
+						jsonMap.put(res, val+" *");
+					else
+						jsonMap.put(res, val);
 				}
 				jsonList.add(jsonMap);
 			}

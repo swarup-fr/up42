@@ -5,5 +5,5 @@ import com.fr.core.vo.ResponseVo;
 
 public interface MergeStrategy {
 
-	public ResponseVo getReportData(ReportFilter filterParameter) throws Exception;
+	public ResponseVo getReportData(String filterParameter) throws Exception;
 }

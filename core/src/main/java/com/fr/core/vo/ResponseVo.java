@@ -11,7 +11,7 @@ public class ResponseVo {
 	private String errors;
 	
 	@ApiModelProperty(notes = "API response data")
-	private Data records;
+	private Object records;
 	
 	public int getStatus() {
 		return status;
@@ -25,10 +25,10 @@ public class ResponseVo {
 	public void setErrors(String errors) {
 		this.errors = errors;
 	}
-	public Data getRecords() {
+	public Object getRecords() {
 		return records;
 	}
-	public void setRecords(Data records) {
+	public void setRecords(Object records) {
 		this.records = records;
 	}
 	

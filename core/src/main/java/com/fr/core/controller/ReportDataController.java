@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.fr.core.service.ASPPMergeStrategy;
+import com.fr.core.service.CoreSPPMergeStrategy;
 import com.fr.core.service.CoverPageStrategy;
 import com.fr.core.service.FixedIncomeAnalysisStrategy;
 import com.fr.core.service.MergeContext;
-import com.fr.core.vo.ReportFilter;
+import com.fr.core.service.PerformanceStrategy;
+import com.fr.core.service.SectorAllocationStrategy;
 import com.fr.core.vo.ResponseVo;
 
 import io.swagger.annotations.ApiOperation;
@@ -39,8 +41,17 @@ public class ReportDataController {
 	@Autowired
 	private CoverPageStrategy coverpageMS;
 	
+	@Autowired
+	private SectorAllocationStrategy sas;
+	
+	@Autowired
+	private CoreSPPMergeStrategy coreSppMS;
+	
+	@Autowired
+	private PerformanceStrategy ps;
+	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@RequestMapping(method = RequestMethod.POST, value = "/asset/performance", consumes = "application/json",produces = "application/json")
+	@RequestMapping(method = RequestMethod.POST, value = "/asset/performance", consumes = "application/json", produces = "application/json")
 	@ApiOperation(value = "Provides Asset Performance Data.")
 	@ApiResponses(value = {
 	        @ApiResponse(code = 200, message = "The request has succeeded."),
@@ -50,7 +61,7 @@ public class ReportDataController {
 	        @ApiResponse(code = 500, message = "Internal Server Error.")
 	})
 	public ResponseEntity<ResponseVo> assetPerformanceData(
-			@RequestBody(required=true) ReportFilter filterParameter) throws IOException {
+			@RequestBody(required=true) String filterParameter) throws IOException {
 		logger.info("Controller invoked asset/performance:: ");
 		ResponseVo response= new ResponseVo(); 
 		mergeContext.setMergeContext(asppMS);
@@ -64,7 +75,7 @@ public class ReportDataController {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@RequestMapping(method = RequestMethod.POST, value = "/fixedIncome/fixedIncomeAnalysis",consumes = "application/json", produces = "application/json")
+	@RequestMapping(method = RequestMethod.POST, value = "/fixedIncome/fixedIncomeAnalysis", produces = "application/json")
 	@ApiOperation(value = "Provides Fixed Income Analysis Data.")
 	@ApiResponses(value = {
 	        @ApiResponse(code = 200, message = "The request has succeeded."),
@@ -74,7 +85,7 @@ public class ReportDataController {
 	        @ApiResponse(code = 500, message = "Internal Server Error.")
 	})
 	public ResponseEntity<ResponseVo> fixedIncomeAnalysisData(
-			@RequestBody(required=true) ReportFilter filterParameter) throws IOException {
+			@RequestBody(required=true) String filterParameter) throws IOException {
 		logger.info("Controller invoked fixedIncome/fixedIncomeAnalysis:: ");
 		ResponseVo response= new ResponseVo(); 
 		mergeContext.setMergeContext(fiaMS);
@@ -86,8 +97,8 @@ public class ReportDataController {
 		}
 	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
 	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+
+		@SuppressWarnings({ "rawtypes", "unchecked" })
 	@RequestMapping(method = RequestMethod.POST, value = "/coverpage/demographics",consumes = "application/json", produces = "application/json")
 	@ApiOperation(value = "Provides Cover Page Demograhics Data.")
 	@ApiResponses(value = {
@@ -98,7 +109,7 @@ public class ReportDataController {
 	        @ApiResponse(code = 500, message = "Internal Server Error.")
 	})
 	public ResponseEntity<ResponseVo> coverpageDemographicsData(
-			@RequestBody(required=true) ReportFilter filterParameter) throws IOException {
+			@RequestBody(required=true) String filterParameter) throws IOException {
 		logger.info("Controller invoked coverpage/demographics:: ");
 		ResponseVo response= new ResponseVo(); 
 		mergeContext.setMergeContext(coverpageMS);
@@ -111,4 +122,75 @@ public class ReportDataController {
 	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@RequestMapping(method = RequestMethod.POST, value = "/sector/allocation", consumes = "application/json", produces = "application/json")
+	@ApiOperation(value = "Provides Sector allocation Data.")
+	@ApiResponses(value = {
+	        @ApiResponse(code = 200, message = "The request has succeeded."),
+	        @ApiResponse(code = 401, message = "The request requires user authentication."),
+	        @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden."),
+	        @ApiResponse(code = 404, message = "The server has not found anything matching the Request-URI."),
+	        @ApiResponse(code = 500, message = "Internal Server Error.")
+	})
+	public ResponseEntity<ResponseVo> sectorAllocationData(
+			@RequestBody(required=true) String filterParameter) throws IOException {
+		logger.info("Controller invoked asset/performance:: ");
+		ResponseVo response= new ResponseVo(); 
+		mergeContext.setMergeContext(sas);
+	    try {
+	    	response = mergeContext.executeMergeStrategy(filterParameter);
+		} catch (Exception e) {
+			logger.error("Error in assetPerformanceData", e);
+			return new ResponseEntity("Exception in asset/performance", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@RequestMapping(method = RequestMethod.POST, value = "/performance", consumes = "application/json", produces = "application/json")
+	@ApiOperation(value = "Provides Sector allocation Data.")
+	@ApiResponses(value = {
+	        @ApiResponse(code = 200, message = "The request has succeeded."),
+	        @ApiResponse(code = 401, message = "The request requires user authentication."),
+	        @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden."),
+	        @ApiResponse(code = 404, message = "The server has not found anything matching the Request-URI."),
+	        @ApiResponse(code = 500, message = "Internal Server Error.")
+	})
+	public ResponseEntity<ResponseVo> performanceData(
+			@RequestBody(required=true) String filterParameter) throws IOException {
+		logger.info("Controller invoked performance:: ");
+		ResponseVo response= new ResponseVo(); 
+		mergeContext.setMergeContext(ps);
+	    try {
+	    	response = mergeContext.executeMergeStrategy(filterParameter);
+		} catch (Exception e) {
+			logger.error("Error in assetPerformanceData", e);
+			return new ResponseEntity("Exception in asset/performance", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@RequestMapping(method = RequestMethod.POST, value = "/coreApp/selectedPeriodPerf", consumes = "application/json",produces = "application/json")
+	@ApiOperation(value = "Provides CoreApp Selected Period Performance Data.")
+	@ApiResponses(value = {
+	        @ApiResponse(code = 200, message = "The request has succeeded."),
+	        @ApiResponse(code = 401, message = "The request requires user authentication."),
+	        @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden."),
+	        @ApiResponse(code = 404, message = "The server has not found anything matching the Request-URI."),
+	        @ApiResponse(code = 500, message = "Internal Server Error.")
+	})
+	public ResponseEntity<ResponseVo> coreSelectedPeriodPerformanceData(
+			@RequestBody(required=true) String filterParameter) throws IOException {
+		logger.info("Controller invoked coreApp/selectedPeriodPerf:: ");
+		ResponseVo response= new ResponseVo(); 
+		mergeContext.setMergeContext(coreSppMS);
+	    try {
+	    	response = mergeContext.executeMergeStrategy(filterParameter);
+		} catch (Exception e) {
+			logger.error("Error in coreApp/selectedPeriodPerf", e);
+			return new ResponseEntity("Exception in coreApp/selectedPeriodPerf", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
+	}
 }
