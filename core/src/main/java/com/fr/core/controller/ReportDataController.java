@@ -16,10 +16,12 @@ import com.fr.core.service.CoreSPPMergeStrategy;
 import com.fr.core.service.CoverPageStrategy;
 import com.fr.core.service.FinsStrategy;
 import com.fr.core.service.FixedIncomeAnalysisStrategy;
+import com.fr.core.service.GrowthStrategy;
 import com.fr.core.service.HidSumStrategy;
 import com.fr.core.service.MergeContext;
 import com.fr.core.service.PerformanceStrategy;
 import com.fr.core.service.SectorAllocationStrategy;
+import com.fr.core.service.TransactionStrategy;
 import com.fr.core.vo.ResponseVo;
 
 import io.swagger.annotations.ApiOperation;
@@ -58,6 +60,13 @@ public class ReportDataController {
 	@Autowired
 	private FinsStrategy fs;
 
+
+	@Autowired
+	private GrowthStrategy gs;
+	
+
+	@Autowired
+	private TransactionStrategy ts;
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@RequestMapping(method = RequestMethod.POST, value = "/asset/performance", consumes = "application/json", produces = "application/json")
@@ -205,7 +214,7 @@ public class ReportDataController {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@RequestMapping(method = RequestMethod.POST, value = "/hidsum", consumes = "application/json",produces = "application/json")
-	@ApiOperation(value = "Provides CoreApp Selected Period Performance Data.")
+	@ApiOperation(value = "Provides hidsum Data.")
 	@ApiResponses(value = {
 	        @ApiResponse(code = 200, message = "The request has succeeded."),
 	        @ApiResponse(code = 401, message = "The request requires user authentication."),
@@ -228,7 +237,7 @@ public class ReportDataController {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@RequestMapping(method = RequestMethod.POST, value = "/fins", consumes = "application/json",produces = "application/json")
-	@ApiOperation(value = "Provides CoreApp Selected Period Performance Data.")
+	@ApiOperation(value = "Provides fins Data.")
 	@ApiResponses(value = {
 	        @ApiResponse(code = 200, message = "The request has succeeded."),
 	        @ApiResponse(code = 401, message = "The request requires user authentication."),
@@ -245,6 +254,52 @@ public class ReportDataController {
 		} catch (Exception e) {
 			logger.error("Error in fins", e);
 			return new ResponseEntity("Exception in fins", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@RequestMapping(method = RequestMethod.POST, value = "/transactions", consumes = "application/json",produces = "application/json")
+	@ApiOperation(value = "Provides CoreApp Selected Period Performance Data.")
+	@ApiResponses(value = {
+	        @ApiResponse(code = 200, message = "The request has succeeded."),
+	        @ApiResponse(code = 401, message = "The request requires user authentication."),
+	        @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden."),
+	        @ApiResponse(code = 404, message = "The server has not found anything matching the Request-URI."),
+	        @ApiResponse(code = 500, message = "Internal Server Error.")
+	})
+	public ResponseEntity<ResponseVo> getTransactionData(@RequestBody(required=true) String filterParameter) throws IOException {
+		logger.info("Controller invoked transactions:: ");
+		ResponseVo response= new ResponseVo(); 
+		mergeContext.setMergeContext(ts);
+	    try {
+	    	response = mergeContext.executeMergeStrategy(filterParameter);
+		} catch (Exception e) {
+			logger.error("Error in fins", e);
+			return new ResponseEntity("Exception in transactions", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@RequestMapping(method = RequestMethod.POST, value = "/growth", consumes = "application/json",produces = "application/json")
+	@ApiOperation(value = "Provides growth Data.")
+	@ApiResponses(value = {
+	        @ApiResponse(code = 200, message = "The request has succeeded."),
+	        @ApiResponse(code = 401, message = "The request requires user authentication."),
+	        @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden."),
+	        @ApiResponse(code = 404, message = "The server has not found anything matching the Request-URI."),
+	        @ApiResponse(code = 500, message = "Internal Server Error.")
+	})
+	public ResponseEntity<ResponseVo> getGrowthData(@RequestBody(required=true) String filterParameter) throws IOException {
+		logger.info("Controller invoked growth:: ");
+		ResponseVo response= new ResponseVo(); 
+		mergeContext.setMergeContext(gs);
+	    try {
+	    	response = mergeContext.executeMergeStrategy(filterParameter);
+		} catch (Exception e) {
+			logger.error("Error in fins", e);
+			return new ResponseEntity("Exception in growth", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	    return new ResponseEntity<ResponseVo>(response,HttpStatus.OK);
 	}
