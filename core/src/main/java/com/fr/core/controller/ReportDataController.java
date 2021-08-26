@@ -60,11 +60,9 @@ public class ReportDataController {
 	@Autowired
 	private FinsStrategy fs;
 
-
 	@Autowired
 	private GrowthStrategy gs;
 	
-
 	@Autowired
 	private TransactionStrategy ts;
 	
