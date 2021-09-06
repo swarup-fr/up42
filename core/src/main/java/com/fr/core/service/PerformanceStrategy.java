@@ -26,7 +26,7 @@ public class PerformanceStrategy implements MergeStrategy{
 	
 	public static final Logger logger = Logger.getLogger(PerformanceStrategy.class);
 
-	@Value("${webfocus.ps.url}")
+	@Value("${webfocus.url}")
 	private String webfocusUrl;
 	
 
