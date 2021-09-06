@@ -27,7 +27,7 @@ public class SectorAllocationStrategy implements MergeStrategy{
 	
 	public static final Logger logger = Logger.getLogger(SectorAllocationStrategy.class);
 
-	@Value("${webfocus.sa.url}")
+	@Value("${webfocus.url}")
 	private String webfocusSaUrl;
 	
 
