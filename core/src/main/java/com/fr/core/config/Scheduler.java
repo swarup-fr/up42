@@ -20,13 +20,13 @@ import com.fr.util.APIGateway;
 public class Scheduler {
 
 
-	@Value("${webfocus.credentials.user")
+	@Value("${webfocus.credentials.user}")
 	private String wfUser;
 	
-	@Value("${webfocus.credentials.pwd")
+	@Value("${webfocus.credentials.pwd}")
 	private String wfPwd;
 	
-	@Value("${webfocus.session.acquire.url")
+	@Value("${webfocus.session.acquire.url}")
 	private String wfsUrl;
 	
 	@Autowired
